@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  bgp-hijack-monitor:
+    build: .
+    image: bgp-hijack-monitor:latest
+    container_name: bgp-hijack-monitor
+    restart: unless-stopped
+    command: ["monitor", "-c", "/app/config.yaml"]
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - bgp-monitor-data:/app/data
+    environment:
+      # Populate these in a local .env file (never commit real secrets) --
+      # only the ones enabled in config.yaml need to actually be set.
+      - BGPMON_SMTP_PASSWORD
+      - BGPMON_SLACK_WEBHOOK_URL
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bgp-monitor-data:

@@ -1,0 +1,89 @@
+# ============================================================================
+# bgp-hijack-monitor configuration
+#
+# Copy this file to config.yaml (or any path) and edit the values below,
+# then run:
+#
+#   bgp-hijack-monitor init-baseline -c config.yaml
+#   bgp-hijack-monitor monitor -c config.yaml
+#
+# ============================================================================
+
+# Your organization's name -- shown in logs/alerts only.
+org_name: "Example Corp"
+
+# --------------------------------------------------------------------------
+# Prefixes to monitor. Add one entry per IP block you originate.
+# `expected_origin_asns` should be the ASN(s) that legitimately announce
+# this prefix today (your own ASN, and/or a transit/anycast partner's ASN
+# if applicable).
+# --------------------------------------------------------------------------
+prefixes:
+  - prefix: "203.0.113.0/24"
+    description: "Primary office + colo block"
+    expected_origin_asns: [64512]
+    # ASNs allowed to announce more-specifics of this block without
+    # triggering an alert (e.g. a DDoS scrubbing provider, an anycast CDN
+    # you've contracted with). Leave empty if nobody else should ever
+    # announce a more-specific of this prefix.
+    allowed_more_specific_asns: []
+    # Alert if the AS path ever gets shorter than this many hops for an
+    # otherwise-expected announcement (helps catch prepend-stripping).
+    # Set to 1 (default) to disable this check.
+    min_expected_path_length: 1
+
+  - prefix: "2001:db8::/32"
+    description: "IPv6 allocation"
+    expected_origin_asns: [64512]
+    allowed_more_specific_asns: []
+    min_expected_path_length: 1
+
+# --------------------------------------------------------------------------
+# Data sources (defaults are almost always fine)
+# --------------------------------------------------------------------------
+ris_live_url: "wss://ris-live.ripe.net/v1/ws/"
+ripestat_base_url: "https://stat.ripe.net"
+client_name: "bgp-hijack-monitor-example-corp"   # sent to RIS Live so RIPE can see who's connecting
+
+# Where to keep the local SQLite database (baseline + event history).
+state_db_path: "bgp_monitor_state.sqlite3"
+
+# Reconnect behaviour for the RIS Live WebSocket feed.
+reconnect_backoff_seconds: 5
+reconnect_backoff_max_seconds: 300
+heartbeat_timeout_seconds: 120
+
+# --------------------------------------------------------------------------
+# Alerting
+# --------------------------------------------------------------------------
+alerting:
+  # Always-on, zero-config console/log output. Turn off for pure-webhook setups.
+  console: true
+
+  # Minimum severity that actually triggers a delivered alert:
+  # low | medium | high | critical
+  min_severity: "medium"
+
+  email:
+    enabled: false
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+    use_tls: true
+    username: "alerts@example.com"
+    # Password is read from this environment variable, never stored in this file.
+    password_env_var: "BGPMON_SMTP_PASSWORD"
+    from_addr: "alerts@example.com"
+    to_addrs:
+      - "noc@example.com"
+      - "security@example.com"
+
+  slack:
+    enabled: false
+    # Webhook URL is read from this environment variable, never stored in this file.
+    webhook_url_env_var: "BGPMON_SLACK_WEBHOOK_URL"
+
+  webhook:
+    enabled: false
+    url: "https://example.com/hooks/bgp-alerts"
+    headers:
+      Authorization: "Bearer replace-me"
