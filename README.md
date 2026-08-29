@@ -267,7 +267,7 @@ subscriptions specifically to keep its footprint on their infrastructure small.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). 2026
 
 ## Contributing
 
